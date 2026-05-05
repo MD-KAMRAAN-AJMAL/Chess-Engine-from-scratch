@@ -12,7 +12,7 @@ import models.Piece;
 public class BoardPanel extends JPanel {
 
     private final int squareSize = 75;
-
+    public BoardModel board = new BoardModel();
     private Piece selectedPiece;
 
     public BoardPanel() {
@@ -24,7 +24,7 @@ public class BoardPanel extends JPanel {
                     int col = (Integer) (e.getX() / squareSize);
                     int row = (Integer) (e.getY() / squareSize);
 
-                    selectedPiece = BoardModel.board[row][col];
+                    selectedPiece = board.getPiece(row, col);
 
                     repaint();
                 }
@@ -70,10 +70,9 @@ public class BoardPanel extends JPanel {
     }
 
     private void drawPieces(Graphics g) {
-        var board = BoardModel.board;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                var piece = board[i][j];
+                var piece = board.getPiece(i, j);
                 if (piece != null) {
                     piece.setPos(squareSize * j, squareSize * i);
                     g.drawImage(

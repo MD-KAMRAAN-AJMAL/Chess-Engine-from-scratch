@@ -2,7 +2,7 @@ package models;
 
 public class BoardModel {
 
-    public static Piece[][] board = {
+    private Piece[][] board = {
         {
             new Piece(PieceType.ROOK),
             new Piece(PieceType.KNIGHT),
@@ -48,4 +48,12 @@ public class BoardModel {
             new Piece(PieceType.rook),
         },
     };
+
+    public Piece getPiece(int row, int col) {
+        return board[row][col];
+    }
+
+    public void setPiece(Piece piece, int row, int col) {
+        board[row][col] = piece;
+    }
 }
