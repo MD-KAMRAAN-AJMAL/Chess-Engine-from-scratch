@@ -70,7 +70,7 @@ public enum PieceType {
     private int value;
     private boolean isWhite;
 
-    private PieceType(String imagePath, int value, Boolean isWhite) {
+    private PieceType(String imagePath, int value, boolean isWhite) {
         this.pImage = new ImageIcon(imagePath).getImage();
         this.value = value;
         this.isWhite = isWhite;
