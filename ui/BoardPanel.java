@@ -5,8 +5,11 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import javax.swing.JPanel;
 import models.BoardModel;
+import models.Move;
+import models.MoveGenerator;
 import models.Piece;
 
 public class BoardPanel extends JPanel {
@@ -43,11 +46,31 @@ public class BoardPanel extends JPanel {
 
     private void drawHightlight(Graphics g) {
         if (selectedPiece != null) {
-            int selectedCol = selectedPiece.getPosX();
-            int selectedRow = selectedPiece.getPosY();
+            int selectedRow = selectedPiece.getRow();
+            int selectedCol = selectedPiece.getCol();
 
             g.setColor(new Color(255, 255, 0, 120));
-            g.fillRect(selectedCol, selectedRow, squareSize, squareSize);
+            g.fillRect(
+                selectedCol * squareSize,
+                selectedRow * squareSize,
+                squareSize,
+                squareSize
+            );
+
+            List<Move> moves = new MoveGenerator().getLegalMoves(
+                board,
+                selectedPiece
+            );
+
+            for (Move move : moves) {
+                g.setColor(new Color(255, 255, 0, 120));
+                g.fillRect(
+                    move.getToCol() * squareSize,
+                    move.getToRow() * squareSize,
+                    squareSize,
+                    squareSize
+                );
+            }
         }
     }
 
@@ -74,11 +97,11 @@ public class BoardPanel extends JPanel {
             for (int j = 0; j < 8; j++) {
                 var piece = board.getPiece(i, j);
                 if (piece != null) {
-                    piece.setPos(squareSize * j, squareSize * i);
+                    piece.setPos(i, j);
                     g.drawImage(
                         piece.getType().getImage(),
-                        piece.getPosX(),
-                        piece.getPosY(),
+                        piece.getCol() * squareSize,
+                        piece.getRow() * squareSize,
                         squareSize,
                         squareSize,
                         null

@@ -56,4 +56,8 @@ public class BoardModel {
     public void setPiece(Piece piece, int row, int col) {
         board[row][col] = piece;
     }
+
+    public boolean isInside(int r, int c) {
+        return r >= 0 && r < 8 && c >= 0 && c < 8;
+    }
 }
