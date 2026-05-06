@@ -23,6 +23,14 @@ public class Piece {
         this.col = col;
     }
 
+    public Piece(Piece other) {
+        this.type = other.type;
+        this.row = other.row;
+        this.col = other.col;
+        this.prevRow = other.prevRow;
+        this.prevCol = other.prevCol;
+    }
+
     public PieceType getType() {
         return type;
     }

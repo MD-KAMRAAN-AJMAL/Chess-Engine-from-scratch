@@ -1,5 +1,7 @@
 package ui;
 
+import engine.MoveGenerator;
+import engine.Search;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -9,13 +11,13 @@ import java.util.List;
 import javax.swing.JPanel;
 import models.BoardModel;
 import models.Move;
-import models.MoveGenerator;
 import models.Piece;
 
 public class BoardPanel extends JPanel {
 
     private final int squareSize = 75;
     public BoardModel board = new BoardModel();
+    private engine.MoveGenerator moveGenerator = new MoveGenerator();
     private Piece selectedPiece;
 
     public BoardPanel() {
@@ -26,8 +28,41 @@ public class BoardPanel extends JPanel {
                 public void mouseClicked(MouseEvent e) {
                     int col = (Integer) (e.getX() / squareSize);
                     int row = (Integer) (e.getY() / squareSize);
+                    Piece clickedPiece = board.getPiece(row, col);
 
-                    selectedPiece = board.getPiece(row, col);
+                    if (selectedPiece != null && board.isWhiteTurn) {
+                        List<Move> legalMoves = moveGenerator.getLegalMoves(
+                            board,
+                            selectedPiece
+                        );
+
+                        for (Move move : legalMoves) {
+                            if (
+                                move.getToRow() == row && move.getToCol() == col
+                            ) {
+                                board.makeMove(move);
+                                selectedPiece = null;
+
+                                Move blackMove = new Search().bestMove(board);
+                                if (blackMove != null) {
+                                    board.makeMove(blackMove);
+                                }
+
+                                repaint();
+                                return;
+                            }
+                        }
+                    }
+
+                    if (
+                        clickedPiece != null &&
+                        clickedPiece.getType().isWhite() &&
+                        board.isWhiteTurn
+                    ) {
+                        selectedPiece = clickedPiece;
+                    } else {
+                        selectedPiece = null;
+                    }
 
                     repaint();
                 }
@@ -57,7 +92,7 @@ public class BoardPanel extends JPanel {
                 squareSize
             );
 
-            List<Move> moves = new MoveGenerator().getLegalMoves(
+            List<Move> moves = moveGenerator.getLegalMoves(
                 board,
                 selectedPiece
             );

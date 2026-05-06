@@ -1,7 +1,10 @@
-package models;
+package engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import models.BoardModel;
+import models.Move;
+import models.Piece;
 
 public class MoveGenerator {
 
@@ -104,80 +107,11 @@ public class MoveGenerator {
     }
 
     private List<Move> getBishopMoves(BoardModel position, Piece piece) {
-        int r = piece.getRow();
-        int c = piece.getCol();
-
-        int dir = piece.getType().isWhite() ? 1 : -1;
-
         List<Move> moves = new ArrayList<Move>();
-
-        // left top diagonal
-        for (int i = r, j = c; i >= 0 && j >= 0; i -= dir, j -= dir) {
-            Piece target = position.getPiece(i, j);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, i, j));
-            }
-        }
-
-        // left bottom diagonal
-        for (int i = r, j = c; i >= 0 && j >= 0; i += dir, j += dir) {
-            Piece target = position.getPiece(i, j);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, i, j));
-            }
-        }
-
-        // right top diagonal
-        for (int i = r, j = c; i < 8 && j < 8; i -= dir, j += dir) {
-            Piece target = position.getPiece(i, j);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, i, j));
-            }
-        }
-
-        // right bottom diagonal
-        for (int i = r, j = c; i < 8 && j < 8; i += dir, j -= dir) {
-            Piece target = position.getPiece(i, j);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, i, j));
-            }
-        }
+        addRayMoves(position, piece, moves, -1, -1);
+        addRayMoves(position, piece, moves, -1, 1);
+        addRayMoves(position, piece, moves, 1, -1);
+        addRayMoves(position, piece, moves, 1, 1);
 
         return moves;
     }
@@ -218,82 +152,42 @@ public class MoveGenerator {
     }
 
     private List<Move> getRookMoves(BoardModel position, Piece piece) {
-        int r = piece.getRow();
-        int c = piece.getCol();
-
-        int dir = piece.getType().isWhite() ? 1 : -1;
-
         List<Move> moves = new ArrayList<Move>();
-
-        // forward
-        for (int i = r; i < 8; i += dir) {
-            Piece target = position.getPiece(i, c);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, i, c));
-            }
-        }
-
-        // backward
-        for (int i = r; i >= 0; i -= dir) {
-            Piece target = position.getPiece(i, c);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, i, c));
-            }
-        }
-
-        // left
-        for (int i = c; i >= 0; i -= dir) {
-            Piece target = position.getPiece(r, i);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, r, i));
-            }
-        }
-
-        // right
-        for (int i = c; i < 8; i += dir) {
-            Piece target = position.getPiece(r, i);
-
-            if (
-                target != null &&
-                target.getType().isWhite() == piece.getType().isWhite()
-            ) break;
-
-            if (
-                target == null ||
-                target.getType().isWhite() != piece.getType().isWhite()
-            ) {
-                moves.add(new Move(r, c, r, i));
-            }
-        }
+        addRayMoves(position, piece, moves, -1, 0);
+        addRayMoves(position, piece, moves, 1, 0);
+        addRayMoves(position, piece, moves, 0, -1);
+        addRayMoves(position, piece, moves, 0, 1);
 
         return moves;
+    }
+
+    private void addRayMoves(
+        BoardModel position,
+        Piece piece,
+        List<Move> moves,
+        int rowStep,
+        int colStep
+    ) {
+        int row = piece.getRow() + rowStep;
+        int col = piece.getCol() + colStep;
+
+        while (position.isInside(row, col)) {
+            Piece target = position.getPiece(row, col);
+
+            if (target == null) {
+                moves.add(new Move(piece.getRow(), piece.getCol(), row, col));
+            } else {
+                if (target.getType().isWhite() != piece.getType().isWhite()) {
+                    moves.add(
+                        new Move(piece.getRow(), piece.getCol(), row, col)
+                    );
+                }
+                break;
+            }
+
+            row += rowStep;
+            col += colStep;
+        }
     }
 
     private List<Move> getPawnMoves(BoardModel position, Piece piece) {
@@ -311,7 +205,7 @@ public class MoveGenerator {
             moves.add(new Move(r, c, oneStepRow, c));
 
             int twoStepRow = r + 2 * dir;
-            boolean onStartRank = (r == 1 && dir == -1) || (r == 6 && dir == 1);
+            boolean onStartRank = (r == 1 && dir == 1) || (r == 6 && dir == -1);
             if (
                 onStartRank &&
                 position.isInside(twoStepRow, c) &&

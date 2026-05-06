@@ -19,4 +19,12 @@ public class Move {
     public int getToCol() {
         return toCol;
     }
+
+    public int getFromRow() {
+        return fromRow;
+    }
+
+    public int getFromCol() {
+        return fromCol;
+    }
 }
