@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import models.BoardModel;
 import models.Move;
 import models.Piece;
@@ -16,12 +17,23 @@ import models.Piece;
 public class BoardPanel extends JPanel {
 
     private final int squareSize = 75;
+    private final Timer updateLoop;
     public BoardModel board = new BoardModel();
     private engine.MoveGenerator moveGenerator = new MoveGenerator();
+    private Search search = new Search();
     private Piece selectedPiece;
 
     public BoardPanel() {
         setPreferredSize(new Dimension(600, 600));
+
+        updateLoop = new Timer(16, e -> {
+            updateFun();
+
+            repaint();
+        });
+
+        updateLoop.start();
+
         addMouseListener(
             new MouseAdapter() {
                 @Override
@@ -43,11 +55,6 @@ public class BoardPanel extends JPanel {
                                 board.makeMove(move);
                                 selectedPiece = null;
 
-                                Move blackMove = new Search().bestMove(board);
-                                if (blackMove != null) {
-                                    board.makeMove(blackMove);
-                                }
-
                                 repaint();
                                 return;
                             }
@@ -68,6 +75,15 @@ public class BoardPanel extends JPanel {
                 }
             }
         );
+    }
+
+    private void updateFun() {
+        if (!board.isWhiteTurn) {
+            Move blackMove = search.bestMove(board);
+            if (blackMove != null) {
+                board.makeMove(blackMove);
+            }
+        }
     }
 
     @Override

@@ -20,7 +20,13 @@ public class Search {
             BoardModel child = position.copy();
             child.makeMove(move);
 
-            int eval = miniMax(child, 4, !position.isWhiteTurn);
+            int eval = alphaBeta(
+                child,
+                6,
+                Integer.MIN_VALUE,
+                Integer.MAX_VALUE,
+                !position.isWhiteTurn
+            );
 
             if (position.isWhiteTurn && eval > bestEval) {
                 bestEval = eval;
@@ -32,6 +38,53 @@ public class Search {
         }
 
         return bestMove;
+    }
+
+    public int alphaBeta(
+        BoardModel position,
+        int depth,
+        int alpha,
+        int beta,
+        boolean maximizingPlayer
+    ) {
+        if (depth == 0) {
+            // add game over case here too
+            return Evaluation.evaluate(position);
+        }
+
+        List<Move> moves = getAllMoves(position, maximizingPlayer);
+
+        if (maximizingPlayer) {
+            int maxEval = Integer.MIN_VALUE;
+
+            for (Move move : moves) {
+                BoardModel child = position.copy();
+                child.isWhiteTurn = true;
+                child.makeMove(move);
+
+                int eval = alphaBeta(child, depth - 1, alpha, beta, false);
+                maxEval = Math.max(maxEval, eval);
+                alpha = Math.max(alpha, maxEval);
+                if (alpha >= beta) break;
+            }
+            return maxEval;
+        } else {
+            int minEval = Integer.MAX_VALUE;
+
+            for (Move move : moves) {
+                BoardModel child = position.copy();
+                child.isWhiteTurn = false;
+                child.makeMove(move);
+
+                int eval = alphaBeta(child, depth - 1, alpha, beta, true);
+                minEval = Math.min(minEval, eval);
+                beta = Math.min(beta, minEval);
+
+                if (alpha >= beta) break;
+            }
+
+            return minEval;
+        }
     }
 
     public int miniMax(
