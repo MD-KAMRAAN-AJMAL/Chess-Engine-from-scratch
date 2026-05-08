@@ -56,6 +56,10 @@ public class BoardModel {
         syncPiecePositions();
     }
 
+    public Piece[][] getBoard() {
+        return board;
+    }
+
     public Piece getPiece(int row, int col) {
         return board[row][col];
     }

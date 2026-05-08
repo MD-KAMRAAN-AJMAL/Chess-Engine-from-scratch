@@ -8,6 +8,8 @@ import models.Piece;
 
 public class Search {
 
+    MoveGenerator generator = new MoveGenerator();
+
     public Move bestMove(BoardModel position) {
         List<Move> legalMoves = getAllMoves(position, position.isWhiteTurn);
 
@@ -22,7 +24,7 @@ public class Search {
 
             int eval = alphaBeta(
                 child,
-                6,
+                5,
                 Integer.MIN_VALUE,
                 Integer.MAX_VALUE,
                 !position.isWhiteTurn
@@ -47,8 +49,16 @@ public class Search {
         int beta,
         boolean maximizingPlayer
     ) {
-        if (depth == 0) {
-            // add game over case here too
+        if (
+            depth == 0 &&
+            generator.isKingInCheck(position, !maximizingPlayer) &&
+            generator
+                .getLegalMoves(
+                    position,
+                    generator.findKing(position, !maximizingPlayer)
+                )
+                .isEmpty()
+        ) {
             return Evaluation.evaluate(position);
         }
 

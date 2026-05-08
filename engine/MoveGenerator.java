@@ -5,10 +5,27 @@ import java.util.List;
 import models.BoardModel;
 import models.Move;
 import models.Piece;
+import models.PieceType;
 
 public class MoveGenerator {
 
     public List<Move> getLegalMoves(BoardModel position, Piece piece) {
+        List<Move> pseudoMoves = getPseudoLegalMoves(position, piece);
+        List<Move> legalMoves = new ArrayList<>();
+
+        for (Move move : pseudoMoves) {
+            BoardModel copy = position.copy();
+            copy.makeMove(move);
+
+            if (!isKingInCheck(copy, piece.getType().isWhite())) {
+                legalMoves.add(move);
+            }
+        }
+
+        return legalMoves;
+    }
+
+    private List<Move> getPseudoLegalMoves(BoardModel position, Piece piece) {
         if (piece == null) return new ArrayList<Move>();
 
         switch (piece.getType()) {
@@ -39,6 +56,234 @@ public class MoveGenerator {
         }
 
         return new ArrayList<Move>();
+    }
+
+    public Piece findKing(BoardModel board, boolean isWhite) {
+        PieceType kingType = isWhite ? PieceType.king : PieceType.KING;
+
+        for (Piece[] row : board.getBoard()) {
+            for (Piece piece : row) {
+                if (piece != null && piece.getType() == kingType) {
+                    return piece;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public boolean isKingInCheck(BoardModel board, boolean isWhite) {
+        Piece king = findKing(board, isWhite);
+        if (king == null) {
+            return false;
+        }
+
+        return isSquareAttacked(board, king.getRow(), king.getCol(), !isWhite);
+    }
+
+    private boolean isSquareAttacked(
+        BoardModel board,
+        int targetRow,
+        int targetCol,
+        boolean byWhite
+    ) {
+        int pawnRow = byWhite ? targetRow + 1 : targetRow - 1;
+        if (board.isInside(pawnRow, targetCol - 1)) {
+            Piece piece = board.getPiece(pawnRow, targetCol - 1);
+            if (
+                piece != null &&
+                piece.getType().isWhite() == byWhite &&
+                isPawn(piece)
+            ) {
+                return true;
+            }
+        }
+        if (board.isInside(pawnRow, targetCol + 1)) {
+            Piece piece = board.getPiece(pawnRow, targetCol + 1);
+            if (
+                piece != null &&
+                piece.getType().isWhite() == byWhite &&
+                isPawn(piece)
+            ) {
+                return true;
+            }
+        }
+
+        int[][] knightOffsets = {
+            { -2, -1 },
+            { -2, 1 },
+            { -1, -2 },
+            { -1, 2 },
+            { 1, -2 },
+            { 1, 2 },
+            { 2, -1 },
+            { 2, 1 },
+        };
+
+        for (int[] offset : knightOffsets) {
+            int row = targetRow + offset[0];
+            int col = targetCol + offset[1];
+            if (!board.isInside(row, col)) {
+                continue;
+            }
+
+            Piece piece = board.getPiece(row, col);
+            if (
+                piece != null &&
+                piece.getType().isWhite() == byWhite &&
+                isKnight(piece)
+            ) {
+                return true;
+            }
+        }
+
+        int[][] bishopDirections = {
+            { -1, -1 },
+            { -1, 1 },
+            { 1, -1 },
+            { 1, 1 },
+        };
+        for (int[] direction : bishopDirections) {
+            if (
+                isAttackedAlongRay(
+                    board,
+                    targetRow,
+                    targetCol,
+                    byWhite,
+                    direction[0],
+                    direction[1],
+                    true,
+                    false
+                )
+            ) {
+                return true;
+            }
+        }
+
+        int[][] rookDirections = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+        for (int[] direction : rookDirections) {
+            if (
+                isAttackedAlongRay(
+                    board,
+                    targetRow,
+                    targetCol,
+                    byWhite,
+                    direction[0],
+                    direction[1],
+                    false,
+                    true
+                )
+            ) {
+                return true;
+            }
+        }
+
+        for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+            for (int colOffset = -1; colOffset <= 1; colOffset++) {
+                if (rowOffset == 0 && colOffset == 0) {
+                    continue;
+                }
+
+                int row = targetRow + rowOffset;
+                int col = targetCol + colOffset;
+                if (!board.isInside(row, col)) {
+                    continue;
+                }
+
+                Piece piece = board.getPiece(row, col);
+                if (
+                    piece != null &&
+                    piece.getType().isWhite() == byWhite &&
+                    isKing(piece)
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isAttackedAlongRay(
+        BoardModel board,
+        int startRow,
+        int startCol,
+        boolean byWhite,
+        int rowStep,
+        int colStep,
+        boolean allowBishop,
+        boolean allowRook
+    ) {
+        int row = startRow + rowStep;
+        int col = startCol + colStep;
+
+        while (board.isInside(row, col)) {
+            Piece piece = board.getPiece(row, col);
+            if (piece != null) {
+                if (piece.getType().isWhite() != byWhite) {
+                    return false;
+                }
+
+                if (isQueen(piece)) {
+                    return true;
+                }
+                if (allowBishop && isBishop(piece)) {
+                    return true;
+                }
+                if (allowRook && isRook(piece)) {
+                    return true;
+                }
+
+                return false;
+            }
+
+            row += rowStep;
+            col += colStep;
+        }
+
+        return false;
+    }
+
+    private boolean isPawn(Piece piece) {
+        return (
+            piece.getType() == PieceType.PAWN ||
+            piece.getType() == PieceType.pawn
+        );
+    }
+
+    private boolean isKnight(Piece piece) {
+        return (
+            piece.getType() == PieceType.KNIGHT ||
+            piece.getType() == PieceType.knight
+        );
+    }
+
+    private boolean isBishop(Piece piece) {
+        return (
+            piece.getType() == PieceType.BISHOP ||
+            piece.getType() == PieceType.bishop
+        );
+    }
+
+    private boolean isRook(Piece piece) {
+        return (
+            piece.getType() == PieceType.ROOK ||
+            piece.getType() == PieceType.rook
+        );
+    }
+
+    private boolean isQueen(Piece piece) {
+        return (
+            piece.getType() == PieceType.QUEEN ||
+            piece.getType() == PieceType.queen
+        );
+    }
+
+    private boolean isKing(Piece piece) {
+        return (
+            piece.getType() == PieceType.KING ||
+            piece.getType() == PieceType.king
+        );
     }
 
     private List<Move> isLegalMove(
