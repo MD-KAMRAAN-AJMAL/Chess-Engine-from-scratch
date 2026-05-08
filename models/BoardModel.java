@@ -99,11 +99,41 @@ public class BoardModel {
             return;
         }
 
+        if (
+            (movingPiece.getType() == PieceType.KING ||
+                movingPiece.getType() == PieceType.king) &&
+            Math.abs(tc - fc) == 2
+        ) {
+            moveCastleRook(fr, fc, tr, tc);
+        }
+
         movingPiece.setPrevPos(fr, fc);
         movingPiece.setPos(tr, tc);
+        movingPiece.setHasMoved(true);
         board[tr][tc] = movingPiece;
         board[fr][fc] = null;
         isWhiteTurn = !isWhiteTurn;
+    }
+
+    private void moveCastleRook(
+        int kingFromRow,
+        int kingFromCol,
+        int kingToRow,
+        int kingToCol
+    ) {
+        int rookFromCol = kingToCol > kingFromCol ? 7 : 0;
+        int rookToCol = kingToCol > kingFromCol ? kingToCol - 1 : kingToCol + 1;
+
+        Piece rook = board[kingFromRow][rookFromCol];
+        if (rook == null) {
+            return;
+        }
+
+        rook.setPrevPos(kingFromRow, rookFromCol);
+        rook.setPos(kingToRow, rookToCol);
+        rook.setHasMoved(true);
+        board[kingToRow][rookToCol] = rook;
+        board[kingFromRow][rookFromCol] = null;
     }
 
     private void syncPiecePositions() {

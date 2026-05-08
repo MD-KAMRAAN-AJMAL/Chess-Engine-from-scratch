@@ -338,7 +338,65 @@ public class MoveGenerator {
         // right bottom
         isLegalMove(position, piece, moves, r - dir, c + dir);
 
+        addCastleMoves(position, piece, moves);
+
         return moves;
+    }
+
+    private void addCastleMoves(
+        BoardModel position,
+        Piece king,
+        List<Move> moves
+    ) {
+        if (king.hasMoved()) {
+            return;
+        }
+
+        boolean isWhite = king.getType().isWhite();
+        int row = king.getRow();
+        int col = king.getCol();
+
+        if (isKingInCheck(position, isWhite)) {
+            return;
+        }
+
+        addCastleMove(position, king, moves, row, col, 1);
+        addCastleMove(position, king, moves, row, col, -1);
+    }
+
+    private void addCastleMove(
+        BoardModel position,
+        Piece king,
+        List<Move> moves,
+        int row,
+        int col,
+        int direction
+    ) {
+        int rookCol = direction > 0 ? 7 : 0;
+        Piece rook = position.getPiece(row, rookCol);
+
+        if (
+            rook == null ||
+            !isRook(rook) ||
+            rook.getType().isWhite() != king.getType().isWhite() ||
+            rook.hasMoved()
+        ) {
+            return;
+        }
+
+        for (int pathCol = col + direction; pathCol != rookCol; pathCol += direction) {
+            if (position.getPiece(row, pathCol) != null) {
+                return;
+            }
+        }
+
+        for (int pathCol = col + direction; pathCol != col + (2 * direction) + direction; pathCol += direction) {
+            if (isSquareAttacked(position, row, pathCol, !king.getType().isWhite())) {
+                return;
+            }
+        }
+
+        moves.add(new Move(row, col, row, col + (2 * direction)));
     }
 
     private List<Move> getQueenMoves(BoardModel position, Piece piece) {

@@ -7,6 +7,7 @@ public class Piece {
     private int col;
     private int prevRow;
     private int prevCol;
+    private boolean hasMoved;
 
     public Piece(PieceType type) {
         this.type = type;
@@ -29,6 +30,7 @@ public class Piece {
         this.col = other.col;
         this.prevRow = other.prevRow;
         this.prevCol = other.prevCol;
+        this.hasMoved = other.hasMoved;
     }
 
     public PieceType getType() {
@@ -59,5 +61,13 @@ public class Piece {
     public void setPrevPos(int prevRow, int prevCol) {
         this.prevRow = prevRow;
         this.prevCol = prevCol;
+    }
+
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    public void setHasMoved(boolean hasMoved) {
+        this.hasMoved = hasMoved;
     }
 }
