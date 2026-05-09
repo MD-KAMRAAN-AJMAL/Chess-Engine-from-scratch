@@ -49,20 +49,20 @@ public class Search {
         int beta,
         boolean maximizingPlayer
     ) {
-        if (
-            depth == 0 &&
-            generator.isKingInCheck(position, !maximizingPlayer) &&
-            generator
-                .getLegalMoves(
-                    position,
-                    generator.findKing(position, !maximizingPlayer)
-                )
-                .isEmpty()
-        ) {
+        if (depth <= 0) {
             return Evaluation.evaluate(position);
         }
 
         List<Move> moves = getAllMoves(position, maximizingPlayer);
+        if (moves.isEmpty()) {
+            if (generator.isKingInCheck(position, maximizingPlayer)) {
+                return maximizingPlayer
+                    ? Integer.MIN_VALUE
+                    : Integer.MAX_VALUE;
+            }
+
+            return Evaluation.evaluate(position);
+        }
 
         if (maximizingPlayer) {
             int maxEval = Integer.MIN_VALUE;
