@@ -7,12 +7,15 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import models.BoardModel;
 import models.Move;
 import models.Piece;
+import models.PieceType;
 
 public class BoardPanel extends JPanel {
 
@@ -22,6 +25,7 @@ public class BoardPanel extends JPanel {
     private engine.MoveGenerator moveGenerator = new MoveGenerator();
     private Search search = new Search();
     private Piece selectedPiece;
+    private boolean gameOver;
 
     public BoardPanel() {
         setPreferredSize(new Dimension(600, 600));
@@ -38,6 +42,10 @@ public class BoardPanel extends JPanel {
             new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
+                    if (gameOver) {
+                        return;
+                    }
+
                     int col = (Integer) (e.getX() / squareSize);
                     int row = (Integer) (e.getY() / squareSize);
                     Piece clickedPiece = board.getPiece(row, col);
@@ -52,8 +60,15 @@ public class BoardPanel extends JPanel {
                             if (
                                 move.getToRow() == row && move.getToCol() == col
                             ) {
-                                board.makeMove(move);
+                                Move selectedMove = chooseMove(legalMoves, row, col);
+                                if (selectedMove == null) {
+                                    repaint();
+                                    return;
+                                }
+
+                                board.makeMove(selectedMove);
                                 selectedPiece = null;
+                                checkGameOver();
 
                                 repaint();
                                 return;
@@ -78,11 +93,36 @@ public class BoardPanel extends JPanel {
     }
 
     private void updateFun() {
+        if (gameOver) {
+            return;
+        }
+
         if (!board.isWhiteTurn) {
             Move blackMove = search.bestMove(board);
             if (blackMove != null) {
                 board.makeMove(blackMove);
+                checkGameOver();
+            } else {
+                checkGameOver();
             }
+        }
+    }
+
+    private void checkGameOver() {
+        boolean sideToMoveIsWhite = board.isWhiteTurn;
+
+        if (moveGenerator.isCheckmate(board, sideToMoveIsWhite)) {
+            gameOver = true;
+            selectedPiece = null;
+            String winner = sideToMoveIsWhite ? "Black" : "White";
+            JOptionPane.showMessageDialog(this, winner + " wins by checkmate.");
+            return;
+        }
+
+        if (moveGenerator.isStalemate(board, sideToMoveIsWhite)) {
+            gameOver = true;
+            selectedPiece = null;
+            JOptionPane.showMessageDialog(this, "Draw by stalemate.");
         }
     }
 
@@ -141,6 +181,57 @@ public class BoardPanel extends JPanel {
                 );
             }
         }
+    }
+
+    private Move chooseMove(List<Move> legalMoves, int row, int col) {
+        List<Move> matchingMoves = new ArrayList<>();
+
+        for (Move move : legalMoves) {
+            if (move.getToRow() == row && move.getToCol() == col) {
+                matchingMoves.add(move);
+            }
+        }
+
+        if (matchingMoves.isEmpty()) {
+            return null;
+        }
+
+        if (matchingMoves.size() == 1) {
+            return matchingMoves.get(0);
+        }
+
+        String[] options = new String[matchingMoves.size()];
+        for (int i = 0; i < matchingMoves.size(); i++) {
+            options[i] = formatPromotionName(
+                matchingMoves.get(i).getPromotionPieceType()
+            );
+        }
+
+        int selectionIndex = JOptionPane.showOptionDialog(
+            this,
+            "Choose the piece for pawn promotion.",
+            "Pawn Promotion",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+
+        if (selectionIndex < 0) {
+            return null;
+        }
+
+        if (selectionIndex >= matchingMoves.size()) {
+            return matchingMoves.get(0);
+        }
+
+        return matchingMoves.get(selectionIndex);
+    }
+
+    private String formatPromotionName(PieceType promotionPieceType) {
+        String name = promotionPieceType.name().toLowerCase();
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 
     private void drawPieces(Graphics g) {

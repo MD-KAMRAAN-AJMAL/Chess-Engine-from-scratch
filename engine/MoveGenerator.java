@@ -9,6 +9,38 @@ import models.PieceType;
 
 public class MoveGenerator {
 
+    public boolean hasAnyLegalMoves(BoardModel position, boolean isWhite) {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = position.getPiece(row, col);
+                if (piece == null || piece.getType().isWhite() != isWhite) {
+                    continue;
+                }
+
+                piece.setPos(row, col);
+                if (!getLegalMoves(position, piece).isEmpty()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isCheckmate(BoardModel position, boolean isWhite) {
+        return (
+            isKingInCheck(position, isWhite) &&
+            !hasAnyLegalMoves(position, isWhite)
+        );
+    }
+
+    public boolean isStalemate(BoardModel position, boolean isWhite) {
+        return (
+            !isKingInCheck(position, isWhite) &&
+            !hasAnyLegalMoves(position, isWhite)
+        );
+    }
+
     public List<Move> getLegalMoves(BoardModel position, Piece piece) {
         List<Move> pseudoMoves = getPseudoLegalMoves(position, piece);
         List<Move> legalMoves = new ArrayList<>();
@@ -505,7 +537,7 @@ public class MoveGenerator {
             position.isInside(oneStepRow, c) &&
             position.getPiece(oneStepRow, c) == null
         ) {
-            moves.add(new Move(r, c, oneStepRow, c));
+            addPawnMove(moves, piece, r, c, oneStepRow, c);
 
             int twoStepRow = r + 2 * dir;
             boolean onStartRank = (r == 1 && dir == 1) || (r == 6 && dir == -1);
@@ -527,7 +559,7 @@ public class MoveGenerator {
                 leftTarget != null &&
                 leftTarget.getType().isWhite() != piece.getType().isWhite()
             ) {
-                moves.add(new Move(r, c, captureRow, leftCol));
+                addPawnMove(moves, piece, r, c, captureRow, leftCol);
             }
         }
 
@@ -538,7 +570,7 @@ public class MoveGenerator {
                 rightTarget != null &&
                 rightTarget.getType().isWhite() != piece.getType().isWhite()
             ) {
-                moves.add(new Move(r, c, captureRow, rightCol));
+                addPawnMove(moves, piece, r, c, captureRow, rightCol);
             }
         }
 
@@ -557,7 +589,7 @@ public class MoveGenerator {
                     leftPawn.getPrevCol() == leftCol &&
                     position.getPiece(captureRow, leftCol) == null
                 ) {
-                    moves.add(new Move(r, c, captureRow, leftCol));
+                    addPawnMove(moves, piece, r, c, captureRow, leftCol);
                 }
             }
 
@@ -576,11 +608,52 @@ public class MoveGenerator {
                     rightPawn.getPrevCol() == rightCol &&
                     position.getPiece(captureRow, rightCol) == null
                 ) {
-                    moves.add(new Move(r, c, captureRow, rightCol));
+                    addPawnMove(moves, piece, r, c, captureRow, rightCol);
                 }
             }
         }
 
         return moves;
+    }
+
+    private void addPawnMove(
+        List<Move> moves,
+        Piece piece,
+        int fromRow,
+        int fromCol,
+        int toRow,
+        int toCol
+    ) {
+        if (!isPromotionRow(piece, toRow)) {
+            moves.add(new Move(fromRow, fromCol, toRow, toCol));
+            return;
+        }
+
+        for (PieceType promotionType : getPromotionPieceTypes(piece.getType().isWhite())) {
+            moves.add(new Move(fromRow, fromCol, toRow, toCol, promotionType));
+        }
+    }
+
+    private boolean isPromotionRow(Piece piece, int toRow) {
+        return (piece.getType().isWhite() && toRow == 0) ||
+        (!piece.getType().isWhite() && toRow == 7);
+    }
+
+    private PieceType[] getPromotionPieceTypes(boolean isWhite) {
+        if (isWhite) {
+            return new PieceType[] {
+                PieceType.queen,
+                PieceType.rook,
+                PieceType.bishop,
+                PieceType.knight,
+            };
+        }
+
+        return new PieceType[] {
+            PieceType.QUEEN,
+            PieceType.ROOK,
+            PieceType.BISHOP,
+            PieceType.KNIGHT,
+        };
     }
 }

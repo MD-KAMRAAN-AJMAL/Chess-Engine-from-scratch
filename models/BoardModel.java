@@ -109,6 +109,9 @@ public class BoardModel {
 
         movingPiece.setPrevPos(fr, fc);
         movingPiece.setPos(tr, tc);
+        if (move.isPromotion()) {
+            movingPiece.setType(move.getPromotionPieceType());
+        }
         movingPiece.setHasMoved(true);
         board[tr][tc] = movingPiece;
         board[fr][fc] = null;

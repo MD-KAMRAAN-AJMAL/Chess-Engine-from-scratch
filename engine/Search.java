@@ -24,7 +24,7 @@ public class Search {
 
             int eval = alphaBeta(
                 child,
-                5,
+                2,
                 Integer.MIN_VALUE,
                 Integer.MAX_VALUE,
                 !position.isWhiteTurn
@@ -56,9 +56,7 @@ public class Search {
         List<Move> moves = getAllMoves(position, maximizingPlayer);
         if (moves.isEmpty()) {
             if (generator.isKingInCheck(position, maximizingPlayer)) {
-                return maximizingPlayer
-                    ? Integer.MIN_VALUE
-                    : Integer.MAX_VALUE;
+                return maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
             }
 
             return Evaluation.evaluate(position);

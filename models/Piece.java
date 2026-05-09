@@ -37,6 +37,10 @@ public class Piece {
         return type;
     }
 
+    public void setType(PieceType type) {
+        this.type = type;
+    }
+
     public int getRow() {
         return row;
     }
